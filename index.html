@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aaria Moments — Wedding photo culling &amp; story-aware albums</title>
+<meta name="description" content="Turn a full-day wedding shoot into a finished album. Aaria Moments removes duplicates and out-of-focus shots, recognises the bride, groom and VIPs, and builds a story-aware album under your photo budget — entirely on your own computer.">
+<meta property="og:title" content="Aaria Moments">
+<meta property="og:description" content="From ten thousand shots to the album they'll keep forever. Cull, recognise, and build story-aware wedding albums — offline, on your device.">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#0f0e17;
+    --bg-2:#14131f;
+    --card:rgba(255,255,255,.045);
+    --card-hi:rgba(255,255,255,.07);
+    --stroke:rgba(255,255,255,.10);
+    --stroke-hi:rgba(255,255,255,.18);
+    --text:#f4f3f8;
+    --sub:#a9a7bd;
+    --dim:#726f88;
+    --accent:#a06bff;
+    --accent-2:#ff7ab0;
+    --accent-3:#4fa8ff;
+    --green:#38d17a;
+    --radius:20px;
+    --maxw:1080px;
+    --mono:"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* aurora backdrop — same mesh-gradient family as the app */
+  .aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;background:var(--bg)}
+  .aurora::before,.aurora::after{
+    content:"";position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;
+  }
+  .aurora::before{
+    width:70vw;height:70vw;top:-25vw;left:-15vw;
+    background:radial-gradient(circle at 30% 30%,#7d4bd6,transparent 62%),
+               radial-gradient(circle at 70% 60%,#ff6fae,transparent 60%);
+  }
+  .aurora::after{
+    width:65vw;height:65vw;bottom:-30vw;right:-20vw;
+    background:radial-gradient(circle at 40% 40%,#2f7fe6,transparent 60%),
+               radial-gradient(circle at 65% 65%,#27b4c4,transparent 62%);
+  }
+  .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:linear-gradient(180deg,transparent,rgba(15,14,23,.55) 78%,var(--bg))}
+
+  /* nav */
+  header{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
+    background:rgba(15,14,23,.55);border-bottom:1px solid var(--stroke)}
+  nav{display:flex;align-items:center;justify-content:space-between;
+    height:64px;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;letter-spacing:.2px}
+  .brand .mark{width:30px;height:30px;border-radius:8px;flex:none;
+    background:conic-gradient(from 210deg,#7d4bd6,#ff6fae,#4fa8ff,#27b4c4,#7d4bd6);
+    display:grid;place-items:center;box-shadow:0 2px 10px rgba(160,107,255,.4)}
+  .brand .mark span{width:9px;height:9px;background:#fff;border-radius:2px;transform:rotate(45deg)}
+  .brand small{display:block;font-size:9px;letter-spacing:3px;color:var(--sub);font-weight:600;margin-top:-2px}
+  .nav-links{display:flex;gap:28px;align-items:center;font-size:14px;color:var(--sub)}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{background:var(--text);color:#12111c;padding:9px 18px;border-radius:999px;
+    font-weight:600;font-size:14px;transition:transform .15s}
+  .nav-cta:hover{transform:translateY(-1px)}
+  @media(max-width:720px){.nav-links a:not(.nav-cta){display:none}}
+
+  /* hero */
+  .hero{padding:96px 0 40px;text-align:center}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);
+    border:1px solid var(--stroke);border-radius:999px;padding:6px 15px;margin-bottom:28px;
+    background:var(--card)}
+  .eyebrow b{color:var(--accent-2);font-weight:600}
+  h1{font-size:clamp(38px,6.5vw,68px);line-height:1.04;font-weight:800;letter-spacing:-1.5px}
+  h1 .grad{background:linear-gradient(105deg,#b98bff,#ff8fc0 45%,#63b4ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:clamp(17px,2.4vw,21px);color:var(--sub);max-width:640px;
+    margin:26px auto 0;line-height:1.55}
+  .attrs{display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;margin-top:26px;
+    font-size:14px;color:var(--sub)}
+  .attrs span{display:inline-flex;align-items:center;gap:8px}
+  .attrs b{color:var(--green);font-size:15px}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:40px}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:14px;
+    font-weight:600;font-size:16px;transition:transform .15s,box-shadow .15s;cursor:pointer;border:none}
+  .btn-primary{background:linear-gradient(105deg,#a06bff,#ff7ab0);color:#fff;
+    box-shadow:0 8px 30px rgba(160,107,255,.4)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 38px rgba(160,107,255,.5)}
+  .btn-ghost{background:var(--card-hi);color:var(--text);border:1px solid var(--stroke-hi)}
+  .btn-ghost:hover{transform:translateY(-2px);background:rgba(255,255,255,.1)}
+
+  /* hero feature strip */
+  .hero-features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+    margin:72px auto 0;max-width:960px}
+  .hf{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);
+    padding:26px 22px;text-align:left;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s}
+  .hf:hover{transform:translateY(-4px);border-color:var(--stroke-hi)}
+  .hf .ic{font-size:26px;margin-bottom:14px;display:block}
+  .hf h3{font-size:17px;font-weight:700;margin-bottom:7px}
+  .hf p{font-size:14px;color:var(--sub);line-height:1.55}
+  @media(max-width:760px){.hero-features{grid-template-columns:1fr}}
+
+  /* sections */
+  section{padding:80px 0;position:relative}
+  .sec-head{text-align:center;max-width:620px;margin:0 auto 52px}
+  .kicker{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .sec-head h2{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.8px;margin:12px 0 14px;line-height:1.1}
+  .sec-head p{color:var(--sub);font-size:17px}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .step{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:28px 22px}
+  .step .num{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+    font-weight:800;font-size:15px;margin-bottom:16px;color:#fff;
+    background:linear-gradient(135deg,#a06bff,#ff7ab0)}
+  .step h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .step p{font-size:14px;color:var(--sub)}
+  @media(max-width:860px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.steps{grid-template-columns:1fr}}
+
+  /* diff grid */
+  .diff{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .dcard{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);
+    padding:26px 24px;transition:background .2s}
+  .dcard:hover{background:var(--card-hi)}
+  .dcard .sym{font-size:22px;margin-bottom:12px}
+  .dcard h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .dcard p{font-size:14px;color:var(--sub);line-height:1.55}
+  @media(max-width:860px){.diff{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.diff{grid-template-columns:1fr}}
+
+  /* download */
+  .dl-wrap{background:linear-gradient(160deg,rgba(160,107,255,.12),rgba(79,168,255,.08));
+    border:1px solid var(--stroke-hi);border-radius:26px;padding:48px 40px;max-width:900px;margin:0 auto}
+  .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px}
+  .dl-card{background:rgba(10,9,17,.5);border:1px solid var(--stroke);border-radius:var(--radius);
+    padding:28px;display:flex;flex-direction:column;gap:14px}
+  .dl-card .os{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:700}
+  .dl-card .os .osic{font-size:24px}
+  .dl-card .meta{font-size:13px;color:var(--dim)}
+  .dl-card .btn{justify-content:center;width:100%;font-size:15px;padding:13px}
+  .dl-card ul{list-style:none;font-size:13px;color:var(--sub);display:flex;flex-direction:column;gap:6px}
+  .dl-card li{display:flex;gap:8px}
+  .dl-card li::before{content:"→";color:var(--accent);flex:none}
+  .sha{font-family:var(--mono);font-size:10.5px;color:var(--dim);word-break:break-all;
+    background:rgba(0,0,0,.3);padding:8px 10px;border-radius:8px;line-height:1.5}
+  @media(max-width:680px){.dl-grid{grid-template-columns:1fr}.dl-wrap{padding:34px 22px}}
+
+  .note{max-width:900px;margin:26px auto 0;font-size:13.5px;color:var(--dim);text-align:center;line-height:1.6}
+
+  /* pricing strip */
+  .price{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:stretch}
+  .price .pc{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);
+    padding:28px 30px;min-width:230px;text-align:center}
+  .price .pc.hi{border-color:var(--accent);background:linear-gradient(160deg,rgba(160,107,255,.14),transparent)}
+  .price .pc .big{font-size:30px;font-weight:800;margin:6px 0}
+  .price .pc .lbl{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .price .pc p{font-size:14px;color:var(--sub);margin-top:6px}
+
+  /* footer */
+  footer{border-top:1px solid var(--stroke);padding:44px 0 60px;margin-top:40px;
+    text-align:center;color:var(--dim);font-size:13px}
+  footer .brand{justify-content:center;margin-bottom:16px}
+  footer a{color:var(--sub)}footer a:hover{color:var(--text)}
+  .foot-links{display:flex;gap:22px;justify-content:center;margin:14px 0}
+
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+<div class="grain"></div>
+
+<header>
+  <nav>
+    <a class="brand" href="#top">
+      <span class="mark"><span></span></span>
+      <span>Aaria Moments<small>STUDIO</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#why">Why it's different</a>
+      <a class="nav-cta" href="#download">Download</a>
+    </div>
+  </nav>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow">🤍 Built for wedding &amp; event photographers &nbsp;·&nbsp; <b>v2.0 out now</b></span>
+      <h1>From ten thousand shots<br>to <span class="grad">the album they'll keep.</span></h1>
+      <p class="lede">Aaria Moments turns a full day of shooting into a finished, story-complete album — culling the throwaways, recognising the people who matter, and covering every moment of the celebration. All on your own computer.</p>
+
+      <div class="attrs">
+        <span><b>✓</b> Runs entirely on your device</span>
+        <span><b>✓</b> Your originals are never touched</span>
+        <span><b>✓</b> Free to try — no account</span>
+      </div>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#download">↓ Download for Mac &amp; Windows</a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+
+      <!-- hero feature highlights -->
+      <div class="hero-features">
+        <div class="hf reveal">
+          <span class="ic">✨</span>
+          <h3>Cull in minutes, not days</h3>
+          <p>Perceptual duplicate detection and focus analysis strip the near-identical frames and soft shots — so you review keepers, not clutter.</p>
+        </div>
+        <div class="hf reveal">
+          <span class="ic">👰</span>
+          <h3>It knows the couple</h3>
+          <p>Enrol the bride, groom and VIPs once — or let Aaria suggest them — and it recognises them in every photo across the whole shoot.</p>
+        </div>
+        <div class="hf reveal">
+          <span class="ic">📖</span>
+          <h3>Builds the story</h3>
+          <p>Detects each function of the day and selects a balanced album under your photo budget — every event covered, every key face present.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">What it does</div>
+        <h2>Three tools. One finished album.</h2>
+        <p>A focused workflow that mirrors how you already work — clean, identify, curate.</p>
+      </div>
+      <div class="diff">
+        <div class="dcard reveal">
+          <div class="sym">✨</div>
+          <h3>Clean</h3>
+          <p>Removes duplicate frames and out-of-focus shots with adjustable sensitivity. Copies only the keepers to a new folder — your originals stay exactly as they are.</p>
+        </div>
+        <div class="dcard reveal">
+          <div class="sym">👤</div>
+          <h3>Faces</h3>
+          <p>Add reference photos of the bride, groom and VIPs, or run Suggest People to have Aaria find the most-photographed faces across the day and rank who matters.</p>
+        </div>
+        <div class="dcard reveal">
+          <div class="sym">📖</div>
+          <h3>Album</h3>
+          <p>Story-aware selection under a photo budget: every event represented, the couple prioritised, closed-eye shots avoided, ritual sequences protected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">How it works</div>
+        <h2>Four steps, start to finished album.</h2>
+        <p>No cloud upload, no waiting in a queue — everything runs locally on your machine.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><div class="num">1</div><h3>Point it at your shoot</h3><p>Pick the folder of RAW-exported JPEGs or HEICs from the day. Nothing leaves your computer.</p></div>
+        <div class="step reveal"><div class="num">2</div><h3>Clean the clutter</h3><p>Strip duplicates and soft shots. Preview each setting in plain language before you run it.</p></div>
+        <div class="step reveal"><div class="num">3</div><h3>Add the faces</h3><p>Enrol the couple and VIPs, or let Suggest People find them for you, and confirm with one click.</p></div>
+        <div class="step reveal"><div class="num">4</div><h3>Build the album</h3><p>Preview the detected events, set your photo budget, and export a balanced, story-complete album.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY DIFFERENT -->
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">Why it's different</div>
+        <h2>Curation, not just a quality score.</h2>
+        <p>Most cullers rank photos by sharpness. Aaria Moments understands the day.</p>
+      </div>
+      <div class="diff">
+        <div class="dcard reveal"><div class="sym">🕯️</div><h3>Ritual protection</h3><p>Near-identical frames of <i>different</i> people performing the same ceremony are kept — because each relative's moment matters, not just the first one.</p></div>
+        <div class="dcard reveal"><div class="sym">🗓️</div><h3>Event coverage</h3><p>Automatically detects each function — betrothal, lunch, reception — and guarantees a minimum from every one, so nothing gets under-represented.</p></div>
+        <div class="dcard reveal"><div class="sym">👁️</div><h3>Eyes-open preference</h3><p>When two frames are otherwise equal, the one where the bride and groom have their eyes open wins.</p></div>
+        <div class="dcard reveal"><div class="sym">🔒</div><h3>Completely offline</h3><p>No uploads, no servers, no subscription. Your clients' photos never leave the room they were edited in.</p></div>
+        <div class="dcard reveal"><div class="sym">🛡️</div><h3>Originals untouched</h3><p>Every operation copies keepers to a new folder. The app can never delete or overwrite your source files.</p></div>
+        <div class="dcard reveal"><div class="sym">⚡</div><h3>Runs on your hardware</h3><p>Parallel, on-device processing means a full wedding is culled and curated in minutes — no per-image cloud fees.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="kicker">Simple licensing</div>
+        <h2>Try it free. One key per device.</h2>
+        <p>No accounts, no recurring fees. A one-time key unlocks the app on your computer for good.</p>
+      </div>
+      <div class="price">
+        <div class="pc reveal">
+          <div class="lbl">Free trial</div>
+          <div class="big">3 runs</div>
+          <p>Clean or build albums three times, no key required — the full app, nothing held back.</p>
+        </div>
+        <div class="pc hi reveal">
+          <div class="lbl">Licensed</div>
+          <div class="big">One device</div>
+          <p>Send us your device code, get a key back, activate. It's locked to that machine and works forever — offline.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section id="download">
+    <div class="wrap">
+      <div class="dl-wrap reveal">
+        <div class="sec-head" style="margin-bottom:0">
+          <div class="kicker">Download</div>
+          <h2>Get Aaria Moments v2.0</h2>
+          <p>Pick your platform. Free to try — the first three runs need no key.</p>
+        </div>
+        <div class="dl-grid">
+          <div class="dl-card">
+            <div class="os"><span class="osic">🍎</span> macOS</div>
+            <div class="meta">Apple Silicon &amp; Intel · .dmg · ~97 MB</div>
+            <a class="btn btn-primary" href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases/download/v2.0/AariaMoments-Mac.dmg">↓ Download for Mac</a>
+            <ul>
+              <li>Open the .dmg, drag to Applications</li>
+              <li>First launch: right-click → Open → Open</li>
+            </ul>
+            <div class="sha">SHA-256<br>0c014d0df39ff1f0019e4197d7a4a33ddefbabb576b17b1ccbb7fbec22e0ed7a</div>
+          </div>
+          <div class="dl-card">
+            <div class="os"><span class="osic">🪟</span> Windows</div>
+            <div class="meta">Portable · .zip · ~157 MB · no install</div>
+            <a class="btn btn-primary" href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases/download/v2.0/AariaMoments-Windows-Portable.zip">↓ Download for Windows</a>
+            <ul>
+              <li>Unzip the whole folder anywhere</li>
+              <li>Double-click “Start Aaria Moments”</li>
+            </ul>
+            <div class="sha">SHA-256<br>94ab333b4133c36cc7de34a34afb4c1454261457ccc340fa5b4d8b3a4096f3ad</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Aaria Moments is distributed directly and is not notarized through the App Store, so your operating system may show a one-time “unidentified developer” prompt on first launch — this is expected for direct-sale software. Verify the SHA-256 above if you'd like to confirm your download is genuine and untampered.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="mark"><span></span></span>
+      <span>Aaria Moments<small>STUDIO</small></span>
+    </a>
+    <div class="foot-links">
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases">Releases</a>
+    </div>
+    <p>© 2026 Aaria's Blue Elephant · Aaria Moments · Runs entirely on your device.</p>
+  </div>
+</footer>
+
+<script>
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{
+    el.style.transitionDelay=(i%4*60)+'ms';io.observe(el);
+  });
+</script>
+</body>
+</html>
