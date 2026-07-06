@@ -60,9 +60,10 @@
   .photo-node img{width:100%;height:100%;object-fit:cover;display:block}
   .photo-node::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(15,14,23,.35))}
   .photo-node.lit{border-color:rgba(255,255,255,.95);
-    box-shadow:0 0 0 2px rgba(255,255,255,.5),0 0 34px 6px var(--glow,rgba(160,107,255,.9)),0 10px 30px rgba(0,0,0,.5);
+    box-shadow:0 0 0 2px rgba(255,255,255,.5),0 0 34px 6px var(--glow,rgba(255,171,64,.9)),0 10px 30px rgba(0,0,0,.5);
     transform:scale(1.16)}
   .hero-inner{position:relative;z-index:5;pointer-events:none;width:100%}
+  .textzone{display:inline-block;max-width:100%}
   .hero-inner a,.hero-inner button{pointer-events:auto}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);
     border:1px solid var(--stroke);border-radius:999px;padding:6px 15px;margin-bottom:22px;background:rgba(20,19,31,.7);backdrop-filter:blur(6px)}
@@ -162,21 +163,23 @@
 </header>
 
 <main id="top">
-  <section class="hero">
+  <section class="hero" id="heroSec">
     <div id="stage"><canvas id="links"></canvas></div>
     <div class="hero-inner wrap">
-      <span class="eyebrow">🤍 For wedding &amp; event photographers &nbsp;·&nbsp; <b>v2.0</b></span>
-      <h1>From ten thousand shots<br>to <span class="grad">the album you'll keep.</span></h1>
-      <p class="lede">You capture the moment. Aaria Moments keeps the best of it — culled, curated, and ready in minutes. Every celebration. Entirely on your computer.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="#download">↓ Download free</a>
-        <a class="btn btn-ghost" href="#how">See how</a>
-      </div>
-      <div class="hint">✦ <b>Tap any photo</b> — watch the moments connect</div>
-      <div class="attrs">
-        <span><b>✓</b> Save hours per shoot</span>
-        <span><b>✓</b> Originals never touched</span>
-        <span><b>✓</b> No account, no cloud</span>
+      <div class="textzone" id="textzone">
+        <span class="eyebrow">🤍 For wedding &amp; event photographers &nbsp;·&nbsp; <b>v2.0</b></span>
+        <h1>From ten thousand shots<br>to <span class="grad">the album you'll keep.</span></h1>
+        <p class="lede">You capture the moment. Aaria Moments keeps the best of it — culled, curated, and ready in minutes. Every celebration. Entirely on your computer.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#download">↓ Download free</a>
+          <a class="btn btn-ghost" href="#how">See how</a>
+        </div>
+        <div class="hint">✦ <b>Tap anywhere</b> — watch the moments connect</div>
+        <div class="attrs">
+          <span><b>✓</b> Save hours per shoot</span>
+          <span><b>✓</b> Originals never touched</span>
+          <span><b>✓</b> No account, no cloud</span>
+        </div>
       </div>
     </div>
   </section>
@@ -289,25 +292,47 @@
   /* ===== interactive photo constellation ===== */
   (function(){
     var reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    var heroSec=document.getElementById('heroSec');
     var stage=document.getElementById('stage'),cv=document.getElementById('links'),ctx=cv.getContext('2d');
-    var PAL={w:[176,120,255],p:[255,122,176],b:[99,180,255],t:[80,210,200]};
-    var PC=[PAL.w,PAL.p,PAL.b,PAL.t];
-    // each: image + palette color for its glow
-    var IMG=[
-      ['img/wedding.jpg',0],['img/confetti.jpg',1],['img/veil.jpg',2],['img/balloons.jpg',1],
-      ['img/asianwed.jpg',3],['img/birthday.jpg',1],['img/partyballoons.jpg',0],['img/grad.jpg',2],
-      ['img/gradgroup.jpg',3],['img/baby.jpg',0],['img/indian.jpg',1],['img/family.jpg',3],
-      ['img/church.jpg',2],['img/mosque.jpg',3],['img/temple.jpg',0],['img/engage.jpg',1],['img/dance.jpg',2]
-    ];
+    var textzone=document.getElementById('textzone');
+    var AMBER=[255,171,64];   // unified amber glow, matching the reference site's "amber links"
+    var IMG=['img/wedding.jpg','img/confetti.jpg','img/veil.jpg','img/balloons.jpg',
+      'img/asianwed.jpg','img/birthday.jpg','img/partyballoons.jpg','img/grad.jpg',
+      'img/gradgroup.jpg','img/baby.jpg','img/indian.jpg','img/family.jpg',
+      'img/church.jpg','img/mosque.jpg','img/temple.jpg','img/engage.jpg','img/dance.jpg'];
     var W=0,H=0,DPR=1,nodes=[],links=[],pulses=[],ripples=[],active=-1,tick=0,autoTimer=0;
+    var KO={x0:0,y0:0,x1:0,y1:0}; // keepout rect around the real, measured text block
+
+    function measureKeepout(){
+      var tr=textzone.getBoundingClientRect(),sr=stage.getBoundingClientRect();
+      var pad=28;
+      KO={x0:tr.left-sr.left-pad, y0:tr.top-sr.top-pad, x1:tr.right-sr.left+pad, y1:tr.bottom-sr.top+pad};
+    }
+    function inKeepout(cx,cy,r){
+      return cx+r>KO.x0 && cx-r<KO.x1 && cy+r>KO.y0 && cy-r<KO.y1;
+    }
+    /* Push a node fully outside the keepout rect via whichever edge is
+       closest, and reverse its velocity on that axis — this runs every
+       frame (not just at placement), so drifting nodes can never end up
+       resting behind the headline regardless of viewport size or text
+       length. */
+    function repelFromKeepout(nd){
+      if(!inKeepout(nd.x,nd.y,nd.r))return;
+      var dl=(nd.x+nd.r)-KO.x0, dr=KO.x1-(nd.x-nd.r), dt=(nd.y+nd.r)-KO.y0, db=KO.y1-(nd.y-nd.r);
+      var m=Math.min(dl,dr,dt,db);
+      if(m===dl){nd.x-=dl;nd.vx=-Math.abs(nd.vx)}
+      else if(m===dr){nd.x+=dr;nd.vx=Math.abs(nd.vx)}
+      else if(m===dt){nd.y-=dt;nd.vy=-Math.abs(nd.vy)}
+      else{nd.y+=db;nd.vy=Math.abs(nd.vy)}
+    }
 
     function build(){
       stage.querySelectorAll('.photo-node').forEach(function(n){n.remove()});
       nodes=[];
       W=stage.clientWidth;H=stage.clientHeight;
-      var n=IMG.length, isNarrow=W<820;
-      var count=isNarrow?11:n;
-      // scatter but avoid dead-centre (where headline sits)
+      measureKeepout();
+      var isNarrow=W<820;
+      var count=isNarrow?11:IMG.length;
       var placed=[];
       for(var i=0;i<count;i++){
         var sz=(isNarrow?46:58)+Math.random()*(isNarrow?20:34);
@@ -315,22 +340,17 @@
         do{ ok=true;
           x=Math.random()*(W-sz); y=Math.random()*(H-sz);
           var cx=x+sz/2,cy=y+sz/2;
-          // keep clear of the central headline column
-          if(cx>W*0.22&&cx<W*0.78&&cy>H*0.10&&cy<H*0.90){ok=false}
+          if(inKeepout(cx,cy,sz/2))ok=false;
           for(var p=0;p<placed.length&&ok;p++){var q=placed[p];
             if(Math.hypot(cx-q.cx,cy-q.cy)<(sz/2+q.r+14))ok=false}
           tries++;
-        }while(!ok&&tries<60);
+        }while(!ok&&tries<80);
         placed.push({cx:x+sz/2,cy:y+sz/2,r:sz/2});
-        var col=PC[IMG[i][1]];
         var el=document.createElement('div');el.className='photo-node';
         el.style.width=el.style.height=sz+'px';el.style.left=x+'px';el.style.top=y+'px';
-        el.style.setProperty('--glow','rgba('+col[0]+','+col[1]+','+col[2]+',.9)');
-        var im=document.createElement('img');im.loading='lazy';im.src=IMG[i][0];im.alt='';el.appendChild(im);
-        (function(idx){el.addEventListener('click',function(){activate(idx,true)});
-                        el.addEventListener('mouseenter',function(){if(active<0)activate(idx,false)})})(i);
+        var im=document.createElement('img');im.loading='lazy';im.src=IMG[i%IMG.length];im.alt='';el.appendChild(im);
         stage.appendChild(el);
-        nodes.push({el:el,x:x+sz/2,y:y+sz/2,r:sz/2,col:col,
+        nodes.push({el:el,x:x+sz/2,y:y+sz/2,r:sz/2,
           vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,bx:x,by:y,tw:Math.random()*6.28});
       }
     }
@@ -338,17 +358,25 @@
     function activate(idx,strong){
       active=idx;var a=nodes[idx];if(!a)return;
       links=[];
-      // connect to nearest few, ordered by distance
       var others=nodes.map(function(nd,j){return {j:j,d:Math.hypot(nd.x-a.x,nd.y-a.y)}})
                       .filter(function(o){return o.j!==idx}).sort(function(p,q){return p.d-q.d});
       var k=Math.min(strong?6:4,others.length);
       for(var m=0;m<k;m++){links.push({a:idx,b:others[m].j,t:0})}
-      nodes.forEach(function(nd){nd.el.classList.remove('lit')});
-      a.el.classList.add('lit');
-      links.forEach(function(l){nodes[l.b].el.classList.add('lit')});
-      if(strong){ripples.push({x:a.x,y:a.y,t:0,col:a.col});
-        // travelling pulses along the new links
-        links.forEach(function(l){pulses.push({a:idx,b:l.b,t:0,sp:.03+Math.random()*.02,col:a.col})})}
+      nodes.forEach(function(nd){nd.el.classList.remove('lit');nd.el.style.removeProperty('--glow')});
+      var glowCss='rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+',.95)';
+      a.el.style.setProperty('--glow',glowCss);a.el.classList.add('lit');
+      links.forEach(function(l){nodes[l.b].el.style.setProperty('--glow',glowCss);nodes[l.b].el.classList.add('lit')});
+      if(strong){ripples.push({x:a.x,y:a.y,t:0});
+        links.forEach(function(l){pulses.push({a:idx,b:l.b,t:0,sp:.03+Math.random()*.02})})}
+    }
+
+    /* nearest node to an arbitrary point — lets a click ANYWHERE in the
+       hero (not just directly on a photo) trigger the same connect effect */
+    function nearestNode(px,py){
+      var best=-1,bd=Infinity;
+      for(var i=0;i<nodes.length;i++){var d=Math.hypot(nodes[i].x-px,nodes[i].y-py);
+        if(d<bd){bd=d;best=i}}
+      return best;
     }
 
     function autoCycle(){ if(nodes.length){activate((Math.random()*nodes.length)|0,true)} }
@@ -362,37 +390,34 @@
 
     function draw(){
       tick++;ctx.clearRect(0,0,W,H);
-      // gentle drift
       for(var i=0;i<nodes.length;i++){var nd=nodes[i];
         nd.x+=nd.vx;nd.y+=nd.vy;
         if(nd.x<nd.r||nd.x>W-nd.r)nd.vx*=-1;if(nd.y<nd.r||nd.y>H-nd.r)nd.vy*=-1;
+        repelFromKeepout(nd);
         var fl=nd.el.classList.contains('lit');
         nd.el.style.transform='translate('+(nd.x-nd.r-nd.bx)+'px,'+(nd.y-nd.r-nd.by)+'px)'+(fl?' scale(1.16)':'')
           +' translateY('+Math.sin(tick*.02+nd.tw)*4+'px)';
       }
-      // connection lines with animated dash + glow
       for(var l=0;l<links.length;l++){var lk=links[l];if(lk.t<1)lk.t+=.06;
-        var a=nodes[lk.a],b=nodes[lk.b],col=a.col;
+        var a=nodes[lk.a],b=nodes[lk.b];
         var g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);
-        g.addColorStop(0,'rgba('+col[0]+','+col[1]+','+col[2]+','+(.9*lk.t)+')');
-        g.addColorStop(1,'rgba('+col[0]+','+col[1]+','+col[2]+','+(.25*lk.t)+')');
+        g.addColorStop(0,'rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+','+(.95*lk.t)+')');
+        g.addColorStop(1,'rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+','+(.3*lk.t)+')');
         ctx.save();ctx.strokeStyle=g;ctx.lineWidth=1.8;ctx.shadowBlur=12;
-        ctx.shadowColor='rgba('+col[0]+','+col[1]+','+col[2]+',.8)';
+        ctx.shadowColor='rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+',.85)';
         var mx=a.x+(b.x-a.x)*lk.t,my=a.y+(b.y-a.y)*lk.t;
         ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(mx,my);ctx.stroke();ctx.restore();
       }
-      // travelling pulses
       for(var p=pulses.length-1;p>=0;p--){var pu=pulses[p];pu.t+=pu.sp;
         if(pu.t>=1){pulses.splice(p,1);continue}
         var a2=nodes[pu.a],b2=nodes[pu.b];
         var x=a2.x+(b2.x-a2.x)*pu.t,y=a2.y+(b2.y-a2.y)*pu.t;
-        ctx.save();ctx.shadowBlur=14;ctx.shadowColor='rgba('+pu.col[0]+','+pu.col[1]+','+pu.col[2]+',1)';
+        ctx.save();ctx.shadowBlur=14;ctx.shadowColor='rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+',1)';
         ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,2.6,0,6.283);ctx.fill();ctx.restore();
       }
-      // shutter ripples
       for(var r=ripples.length-1;r>=0;r--){var rp=ripples[r];rp.t+=.025;
         if(rp.t>=1){ripples.splice(r,1);continue}
-        ctx.strokeStyle='rgba('+rp.col[0]+','+rp.col[1]+','+rp.col[2]+','+(1-rp.t)*.55+')';
+        ctx.strokeStyle='rgba('+AMBER[0]+','+AMBER[1]+','+AMBER[2]+','+(1-rp.t)*.55+')';
         ctx.lineWidth=2;ctx.beginPath();ctx.arc(rp.x,rp.y,rp.t*90,0,6.283);ctx.stroke();
       }
       raf=requestAnimationFrame(draw);
@@ -400,6 +425,16 @@
     var raf;
     function start(){
       resize();window.addEventListener('resize',function(){clearTimeout(window._rt);window._rt=setTimeout(resize,200)});
+      // click ANYWHERE in the hero — not just on a photo — connects the
+      // nearest node from that point, so the effect always responds
+      heroSec.addEventListener('click',function(e){
+        if(e.target.closest('a,button'))return; // let real CTAs work normally
+        if(!nodes.length)return;
+        var sr=stage.getBoundingClientRect();
+        var idx=nearestNode(e.clientX-sr.left,e.clientY-sr.top);
+        if(idx>=0){clearInterval(autoTimer);activate(idx,true);
+          autoTimer=setInterval(autoCycle,3400)}
+      });
       if(reduce){ if(nodes.length)activate(0,true); return } // static: one connected set, no loop
       draw();
       setTimeout(function(){autoCycle();autoTimer=setInterval(autoCycle,3400)},1200);
