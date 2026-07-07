@@ -102,8 +102,38 @@
   .dcard .sym{font-size:24px;margin-bottom:12px}
   .dcard h3{font-size:16px;font-weight:700;margin-bottom:6px}
   .dcard p{font-size:14px;color:var(--sub)}
-  @media(max-width:860px){.diff{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:520px){.diff{grid-template-columns:1fr}}
+  .diff.four{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.diff,.diff.four{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.diff,.diff.four{grid-template-columns:1fr}}
+  .new-tag{display:inline-block;font-style:normal;font-size:10px;font-weight:800;letter-spacing:1.5px;
+    text-transform:uppercase;color:#fff;background:linear-gradient(105deg,#a06bff,#ff7ab0);
+    border-radius:999px;padding:2px 9px;margin-left:8px;vertical-align:2px}
+
+  /* REEL showcase */
+  .reel{background:linear-gradient(160deg,rgba(79,168,255,.10),rgba(160,107,255,.08));
+    border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke)}
+  .reel-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+  .reel-copy h2{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.7px;line-height:1.12;margin:12px 0 14px}
+  .reel-copy h2 .grad{background:linear-gradient(105deg,#7cc0ff,#c49bff 55%,#ff9ac6);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .reel-copy>p{color:var(--sub);font-size:16px;margin-bottom:22px}
+  .reel-feats{list-style:none;display:flex;flex-direction:column;gap:13px}
+  .reel-feats li{display:flex;gap:12px;font-size:14.5px;color:#d7d5e6}
+  .reel-feats .ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;
+    background:rgba(255,255,255,.07);border:1px solid var(--stroke)}
+  .reel-feats b{color:var(--text)}
+  .reel-feats small{display:block;color:var(--sub);font-size:13px}
+  .filmframe{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--stroke-hi);
+    box-shadow:0 24px 70px rgba(0,0,0,.55);aspect-ratio:16/10;background:#1a1526}
+  .filmframe img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+    transform:scale(1.06);transition:opacity 1.1s ease,transform 6.5s linear}
+  .filmframe img.on{opacity:1;transform:scale(1.16)}
+  .filmframe::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(180deg,rgba(15,14,23,.55),transparent 22%,transparent 72%,rgba(15,14,23,.65))}
+  .filmframe::after{content:"▶ REEL · 00:58";position:absolute;left:16px;bottom:12px;z-index:3;
+    font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:#fff;opacity:.9}
+  .filmframe .vig{position:absolute;inset:0;z-index:2;pointer-events:none;
+    box-shadow:inset 0 0 90px 30px rgba(10,8,18,.75)}
+  @media(max-width:860px){.reel-grid{grid-template-columns:1fr;gap:30px}}
 
   .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   .step{background:var(--card);border:1px solid var(--stroke);border-radius:var(--radius);padding:24px 20px;text-align:center}
@@ -155,6 +185,7 @@
     <a class="brand" href="#top"><span class="mark"><span></span></span><span>Aaria Moments<small>STUDIO</small></span></a>
     <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#reel">Reel</a>
       <a href="#how">How it works</a>
       <a href="#why">Why</a>
       <a class="nav-cta" href="#download">Download</a>
@@ -167,7 +198,7 @@
     <div id="stage"><canvas id="links"></canvas></div>
     <div class="hero-inner wrap">
       <div class="textzone" id="textzone">
-        <span class="eyebrow">🤍 For wedding &amp; event photographers &nbsp;·&nbsp; <b>v2.1</b></span>
+        <span class="eyebrow">🤍 For wedding &amp; event photographers &nbsp;·&nbsp; <b>v2.2 — now with cinematic Reels</b></span>
         <h1>From ten thousand shots<br>to <span class="grad">the album you'll keep.</span></h1>
         <p class="lede">You capture the moment. Aaria Moments keeps the best of it — culled, curated, and ready in minutes. Every celebration. Entirely on your computer.</p>
         <div class="cta-row">
@@ -196,11 +227,12 @@
 
   <section id="features">
     <div class="wrap">
-      <div class="sec-head reveal"><div class="kicker">What it does</div><h2>Three tools. One finished album.</h2></div>
-      <div class="diff">
+      <div class="sec-head reveal"><div class="kicker">What it does</div><h2>Four tools. One finished delivery.</h2></div>
+      <div class="diff four">
         <div class="dcard reveal"><div class="sym">✨</div><h3>Clean</h3><p>Duplicates and blurry shots, gone. You review keepers — not ten near-identical frames of the same smile. Originals stay untouched.</p></div>
         <div class="dcard reveal"><div class="sym">👤</div><h3>Faces</h3><p>Tag the couple and VIPs once — or let Aaria suggest them — and it finds them in every photo across the whole day.</p></div>
         <div class="dcard reveal"><div class="sym">📖</div><h3>Album</h3><p>A balanced, story-complete album under your photo budget: every event covered, every key face in, blinks and dupes out.</p></div>
+        <div class="dcard reveal"><div class="sym">🎬</div><h3>Reel <em class="new-tag">new</em></h3><p>A cinematic highlight film from your best shots — real camera moves, licensed music, ready for Instagram or YouTube in minutes.</p></div>
       </div>
     </div>
   </section>
@@ -212,7 +244,34 @@
         <div class="step reveal"><div class="num">1</div><h3>Point &amp; pick</h3><p>Drop in the day's folder. Nothing leaves your machine.</p></div>
         <div class="step reveal"><div class="num">2</div><h3>Clean</h3><p>Strip dupes and soft shots in one pass.</p></div>
         <div class="step reveal"><div class="num">3</div><h3>Tag faces</h3><p>Confirm the couple &amp; VIPs with a click.</p></div>
-        <div class="step reveal"><div class="num">4</div><h3>Build</h3><p>Export a story-complete album.</p></div>
+        <div class="step reveal"><div class="num">4</div><h3>Build</h3><p>Export a story-complete album — and a cinematic reel to match.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reel" id="reel">
+    <div class="wrap">
+      <div class="reel-grid">
+        <div class="reel-copy reveal">
+          <div class="kicker">New in v2.2</div>
+          <h2>Every gallery deserves <span class="grad">a trailer.</span></h2>
+          <p>The Reel turns your keepers into a short cinematic film — the kind couples post before the album is even open. Rendered on your machine, never uploaded.</p>
+          <ul class="reel-feats">
+            <li><span class="ic">🎥</span><div><b>Real camera language</b><small>Rack-focus pulls, push-ins and drifting pans — chosen per photo from its faces and depth, with a filmic grade and grain.</small></div></li>
+            <li><span class="ic">🎵</span><div><b>Licensed music included</b><small>Eight cinematic tracks, cleared for your client videos — or drop in your own. A credits file is saved beside every reel.</small></div></li>
+            <li><span class="ic">🖐</span><div><b>Your picks, your pace</b><small>Hand-pick the exact photos or let Aaria spread them across the day. Any length from 15 s to 3 minutes.</small></div></li>
+            <li><span class="ic">📱</span><div><b>Made to share</b><small>One click for Instagram 9:16, YouTube 16:9 or quick-share 720p.</small></div></li>
+          </ul>
+        </div>
+        <div class="reveal">
+          <div class="filmframe" id="filmframe">
+            <img src="img/veil.jpg" alt="" class="on">
+            <img src="img/dance.jpg" alt="">
+            <img src="img/confetti.jpg" alt="">
+            <img src="img/indian.jpg" alt="">
+            <div class="vig"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -249,17 +308,17 @@
   <section id="download">
     <div class="wrap">
       <div class="dl-wrap reveal">
-        <div class="sec-head" style="margin-bottom:0"><div class="kicker">Download</div><h2>Get Aaria Moments v2.1</h2><p>Free to try — first three runs need no key. New in v2.1: RAW support — cull CR2/CR3, NEF, ARW, DNG, RAF straight off the card.</p></div>
+        <div class="sec-head" style="margin-bottom:0"><div class="kicker">Download</div><h2>Get Aaria Moments v2.2</h2><p>Free to try — first three runs need no key. New in v2.2: the cinematic Reel — highlight films with real camera moves and licensed music, rendered on your machine.</p></div>
         <div class="dl-grid">
           <div class="dl-card">
-            <div class="os"><span class="osic">🍎</span> macOS</div>
-            <div class="meta">Apple Silicon &amp; Intel · .dmg · ~98 MB</div>
-            <a class="btn btn-primary" href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases/download/v2.1/AariaMoments-Mac.dmg">↓ Download for Mac</a>
+            <div class="os"><span class="osic">🍎</span> macOS <span style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1px">v2.2</span></div>
+            <div class="meta">Apple Silicon · .dmg · ~172 MB</div>
+            <a class="btn btn-primary" href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases/download/v2.2/AariaMoments-Mac.dmg">↓ Download for Mac</a>
             <ul><li>Open the .dmg, drag to Applications</li><li>First launch: right-click → Open → Open</li></ul>
-            <div class="sha">SHA-256<br>4fc9ccea625eef1434db533a4b456266202e1a2c19365bbaa48ca2d5686c0add</div>
+            <div class="sha">SHA-256<br>524c11a90cc04d6a3f3aa05bdf4a20b8e6cbe8ce4d43e95837947817c1070366</div>
           </div>
           <div class="dl-card">
-            <div class="os"><span class="osic">🪟</span> Windows</div>
+            <div class="os"><span class="osic">🪟</span> Windows <span style="font-size:11px;color:var(--dim);font-weight:700;letter-spacing:1px">v2.1 · v2.2 coming soon</span></div>
             <div class="meta">Portable · .zip · ~158 MB · no install</div>
             <a class="btn btn-primary" href="https://github.com/aariasblueelephant-create/aaria-moments-releases/releases/download/v2.1/AariaMoments-Windows-Portable.zip">↓ Download for Windows</a>
             <ul><li>Unzip anywhere</li><li>Double-click “Start Aaria Moments”</li></ul>
@@ -285,6 +344,18 @@
 </footer>
 
 <script>
+  /* reel film-frame: slow Ken Burns crossfade */
+  (function(){
+    var f=document.getElementById('filmframe');if(!f)return;
+    var imgs=f.querySelectorAll('img'),cur=0;
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    setInterval(function(){
+      imgs[cur].classList.remove('on');
+      cur=(cur+1)%imgs.length;
+      imgs[cur].classList.add('on');
+    },4200);
+  })();
+
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
   document.querySelectorAll('.reveal').forEach(function(el,i){el.style.transitionDelay=(i%4*55)+'ms';io.observe(el)});
   setTimeout(function(){document.querySelectorAll('.reveal').forEach(function(r){r.classList.add('in')})},2200);
